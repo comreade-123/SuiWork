@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/fontawesome/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: transparent;
+            overflow: hidden;
+            user-select: none;
+        }
+        .island-wrapper {
+            position: relative;
+            width: 320px;
+            margin: 0;
+        }
+        .island-capsule {
+            width: 280px;
+            height: 48px;
+            background: #1E1E2F;
+            border-radius: 40px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            position: relative;
+            z-index: 2;
+        }
+        .capsule-inner {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            gap: 8px;
+        }
+        .capsule-inner input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            font-size: 14px;
+            padding: 4px 8px;
+        }
+        .capsule-inner input::placeholder {
+            color: #8E8E93;
+        }
+        .capsule-inner button {
+            background: none;
+            border: none;
+            color: #AF5FFF;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        .capsule-inner button:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .island-chat-panel {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            margin-top: 8px;
+            width: 320px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            padding: 16px;
+        }
+        .island-chat-panel.active {
+            display: block;
+        }
+        .message {
+            margin-bottom: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .user {
+            text-align: right;
+            color: #1C1C1E;
+        }
+        .ai {
+            color: #1C1C1E;
+        }
+    </style>
+</head>
+<body>
+    <div class="island-wrapper">
+        <div class="island-capsule">
+            <div class="capsule-inner">
+                <input type="text" id="island-input" placeholder="向 Sui 提问..." autofocus>
+                <button id="btn-voice-input" title="语音输入"><i class="fa-solid fa-microphone"></i></button>
+                <button id="btn-send"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+        <div class="island-chat-panel" id="island-chat-panel">
+            <div id="chat-messages"></div>
+        </div>
+    </div>
+    <script>
+        const chatPanel = document.getElementById('island-chat-panel');
+        const chatMessages = document.getElementById('chat-messages');
+        const input = document.getElementById('island-input');
+        const sendBtn = document.getElementById('btn-send');
+        const voiceBtn = document.getElementById('btn-voice-input');
+        let chatHistory = [];
+
+        // 当窗口显示时，自动聚焦输入框
+        window.addEventListener('focus', () => input.focus());
+
+        sendBtn.addEventListener('click', sendMessage);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        async function sendMessage() {
+            const msg = input.value.trim();
+            if (!msg) return;
+            input.value = '';
+            appendMessage('user', msg);
+            chatHistory.push({ role: 'user', content: msg });
+            // 调用主窗口的 API（需要通信）
+            window.pywebview.api.send_to_main('start_ai_stream', { message: msg, history: chatHistory.slice(-10) });
+        }
+
+        function appendMessage(role, text) {
+            chatPanel.classList.add('active');
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+            div.textContent = text;
+            chatMessages.appendChild(div);
+            chatMessages.parentElement.scrollTop = chatMessages.parentElement.scrollHeight;
+        }
+
+        // 接收主窗口传来的 AI 流式分块
+        window.receiveAIChunk = function(chunk) {
+            const last = chatMessages.lastElementChild;
+            if (last && last.classList.contains('ai')) {
+                last.textContent += chunk;
+            } else {
+                appendMessage('ai', chunk);
+            }
+        };
+
+        window.finishAIStream = function() {
+            // AI 回复完成，保存到历史
+            const last = chatMessages.lastElementChild;
+            if (last && last.classList.contains('ai')) {
+                chatHistory.push({ role: 'assistant', content: last.textContent });
+            }
+        };
+
+        // 语音输入
+        voiceBtn.addEventListener('click', () => {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert('您的浏览器不支持语音识别');
+                return;
+            }
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'zh-CN';
+            recognition.start();
+            recognition.onresult = (event) => {
+                input.value = event.results[0][0].transcript;
+                sendMessage();
+            };
+        });
+    </script>
+</body>
+</html>

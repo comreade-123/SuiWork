@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuiWork</title>
+    <link rel="stylesheet" href="css/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { visibility: hidden; }
+        body.loaded { visibility: visible; }
+    </style>
+</head>
+<body>
+    <!-- 入场动画遮罩 -->
+    <div id="splash-screen">
+            <div class="splash-logo">
+            <h1>SuiWork</h1>
+        </div>
+    </div>
+
+    <!-- 对话岛 -->
+    <div id="ai-island" class="ai-island minimized">
+        <div class="island-capsule">
+            <div class="capsule-inner">
+                <input type="text" id="island-input" data-lang-placeholder="island_placeholder" placeholder="向 Sui 提问...">
+                <button id="btn-voice-input" title="语音输入"><i class="fa-solid fa-microphone"></i></button>
+                <button id="btn-send"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+        <div class="island-chat-panel" id="island-chat-panel">
+            <div class="chat-messages" id="chat-messages"></div>
+        </div>
+    </div>
+
+    <!-- 新手引导遮罩层 -->
+    <div id="onboarding-overlay">
+        <div class="onboarding-container">
+            <div class="onboarding-step active" id="step-intro">
+                <img src="assets/sui_stand.png" alt="Sui" class="sui-intro-img" onerror="this.style.display='none'">
+                <div class="intro-texts">
+                    <p class="intro-line" data-lang-key="welcome_title">欢迎来到 SuiWork</p>
+                    <p class="intro-line" data-lang-key="welcome_assistant">我是你的助手 Sui</p>
+                    <p class="intro-line" data-lang-key="welcome_setup">让我们快速设置一下吧</p>
+                </div>
+                <button class="onboarding-next" data-lang-key="btn_start">开始</button>
+            </div>
+
+            <div class="onboarding-step" id="step-theme">
+                <h2 data-lang-key="choose_theme">选择你喜欢的主题</h2>
+                <div class="theme-options">
+                    <div class="theme-card" data-theme="light">
+                        <div class="theme-preview light-preview"></div>
+                        <span data-lang-key="theme_light">明亮</span>
+                    </div>
+                    <div class="theme-card" data-theme="dark">
+                        <div class="theme-preview dark-preview"></div>
+                        <span data-lang-key="theme_dark">暗黑</span>
+                    </div>
+                </div>
+                <button class="onboarding-next" data-lang-key="btn_next">下一步</button>
+                <button class="onboarding-skip" data-lang-key="btn_skip">跳过</button>
+            </div>
+
+            <div class="onboarding-step" id="step-api">
+                <h2 data-lang-key="config_ai">配置 AI 助手（可选）</h2>
+                <p class="hint" data-lang-key="config_ai_hint">提供 OpenAI 兼容的 API 地址和 Key 以启用对话功能</p>
+                <div class="input-group">
+                    <label data-lang-key="label_api_url">API URL</label>
+                    <input type="text" id="input-api-url" placeholder="https://api.openai.com/v1">
+                </div>
+                <div class="input-group">
+                    <label data-lang-key="label_api_key">API Key</label>
+                    <input type="password" id="input-api-key" placeholder="sk-...">
+                </div>
+                <div class="input-group">
+                    <label data-lang-key="label_model_name">模型名称</label>
+                    <input type="text" id="onboarding-ai-model" placeholder="gpt-3.5-turbo">
+                </div>
+                <div class="button-group">
+                    <button class="onboarding-next" data-lang-key="btn_save_continue">保存并继续</button>
+                    <button class="onboarding-skip" data-lang-key="btn_skip">跳过</button>
+                </div>
+            </div>
+
+            <div class="onboarding-step" id="step-profile">
+                <h2 data-lang-key="setup_profile">设置你的资料</h2>
+                <div class="avatar-section">
+                    <img id="preview-avatar" src="assets/sui_stand.png" alt="头像预览" class="profile-avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22%3E%3Ccircle cx=%2240%22 cy=%2240%22 r=%2238%22 fill=%22%23E5E5EA%22/%3E%3Ctext x=%2240%22 y=%2252%22 text-anchor=%22middle%22 font-size=%2232%22 fill=%22%238E8E93%22%3E?%3C/text%3E%3C/svg%3E'">
+                    <button class="btn-change-avatar" id="btn-select-avatar" data-lang-key="btn_select_picture">选择图片</button>
+                </div>
+                <div class="input-group">
+                    <label data-lang-key="label_nickname">昵称</label>
+                    <input type="text" id="input-nickname" data-lang-placeholder="placeholder_nickname" placeholder="SuiUser">
+                </div>
+                <div class="button-group">
+                    <button class="onboarding-next" data-lang-key="btn_finish">完成</button>
+                    <button class="onboarding-skip" data-lang-key="btn_skip">跳过</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自定义标题栏 -->
+    <div id="custom-title-bar">
+        <div class="title-bar-drag">
+            <span class="title-logo">SuiWork</span>
+        </div>
+        <div class="window-controls">
+            <button id="btn-minimize" title="最小化"><i class="fa-solid fa-window-minimize"></i></button>
+            <button id="btn-maximize" title="最大化"><i class="fa-solid fa-window-maximize"></i></button>
+            <button id="btn-close" title="关闭"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
+
+    <!-- 主体布局 -->
+    <div id="app">
+        <nav id="sidebar">
+            <ul class="nav-list">
+                <li class="nav-item active" data-page="profile">
+                    <i class="fa-solid fa-user"></i>
+                    <span data-lang-key="nav_my">我的</span>
+                </li>
+                <li class="nav-item" data-page="ai-chat">
+                    <i class="fa-solid fa-comments"></i>
+                    <span data-lang-key="nav_ai_chat">AI 对话</span>
+                </li>
+                <li class="nav-item" data-page="toolbox">
+                    <i class="fa-solid fa-toolbox"></i>
+                    <span data-lang-key="nav_toolbox">工具箱</span>
+                </li>
+                <li class="nav-item" data-page="extensions">
+                    <i class="fa-solid fa-puzzle-piece"></i>
+                    <span data-lang-key="nav_extensions">扩展</span>
+                </li>
+                <li class="nav-item" data-page="settings">
+                    <i class="fa-solid fa-cog"></i>
+                    <span data-lang-key="nav_settings">设置</span>
+                </li>
+                <li class="nav-item" data-page="about">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span data-lang-key="nav_about">关于</span>
+                </li>
+            </ul>
+        </nav>
+
+        <main id="main-content">
+            <!-- 我的页面 -->
+            <section id="page-profile" class="page active">
+                <h2 data-lang-key="my_profile">我的</h2>
+                <div class="profile-flat">
+                    <div class="profile-row avatar-row">
+                        <img id="profile-avatar-img" src="assets/sui_stand.png" alt="头像" class="profile-avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22%3E%3Ccircle cx=%2240%22 cy=%2240%22 r=%2238%22 fill=%22%23E5E5EA%22/%3E%3Ctext x=%2240%22 y=%2252%22 text-anchor=%22middle%22 font-size=%2232%22 fill=%22%238E8E93%22%3E?%3C/text%3E%3C/svg%3E'">
+                        <button class="btn-change-avatar" id="btn-change-avatar" data-lang-key="btn_change_avatar">更换头像</button>
+                    </div>
+                    <div class="profile-row">
+                        <label data-lang-key="label_nickname">昵称</label>
+                        <input type="text" class="input-nickname" id="profile-nickname" data-lang-placeholder="placeholder_nickname" placeholder="SuiUser">
+                    </div>
+                    <div class="profile-row">
+                        <label data-lang-key="label_bio">个人档案</label>
+                        <textarea class="input-bio" id="profile-bio" data-lang-placeholder="placeholder_bio" placeholder="介绍一下你自己，帮助 AI 理解你的风格..."></textarea>
+                    </div>
+                    <div class="profile-row">
+                        <label data-lang-key="label_config_path">配置存储位置</label>
+                        <input type="text" class="input-path" id="profile-db-path" readonly>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI 对话页面 -->
+            <section id="page-ai-chat" class="page">
+                <div class="chat-top-bar">
+                    <img src="assets/sui_stand.png" class="chat-ai-avatar" onerror="this.style.display='none'">
+                    <span class="chat-ai-name">Sui</span>
+                </div>
+                <div class="chat-message-list" id="chat-tab-messages"></div>
+                <div class="chat-bottom-bar">
+                    <input type="text" id="chat-tab-input" data-lang-placeholder="chat_input_placeholder" placeholder="输入消息...">
+                    <button id="chat-tab-send"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </section>
+
+            <!-- 工具箱页面 -->
+            <section id="page-toolbox" class="page">
+                <div id="toolbox-list">
+                    <h2 data-lang-key="toolbox">工具箱</h2>
+                    <div class="toolbox-grid">
+                        <div class="tool-card" data-tool="sniffer">
+                            <i class="fa-solid fa-globe"></i>
+                            <h3 data-lang-key="tool_sniffer_title">网页资源嗅探器</h3>
+                            <p data-lang-key="tool_sniffer_desc">输入 URL 抓取图片/视频/音频链接</p>
+                        </div>
+                        <div class="tool-card" data-tool="rename">
+                            <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                            <h3 data-lang-key="tool_rename_title">批量重命名</h3>
+                            <p data-lang-key="tool_rename_desc">支持正则与序号</p>
+                        </div>
+                        <div class="tool-card" data-tool="textextract">
+                            <i class="fa-solid fa-file-lines"></i>
+                            <h3 data-lang-key="tool_extract_title">网页纯文本提取</h3>
+                            <p data-lang-key="tool_extract_desc">提取网页正文内容</p>
+                        </div>
+                        <div class="tool-card" data-tool="hash">
+                            <i class="fa-solid fa-calculator"></i>
+                            <h3 data-lang-key="tool_hash_title">文件哈希计算</h3>
+                            <p data-lang-key="tool_hash_desc">MD5 / SHA1 / SHA256</p>
+                        </div>
+                        <div class="tool-card" data-tool="imgconv">
+                            <i class="fa-solid fa-image"></i>
+                            <h3 data-lang-key="tool_imgconv_title">图片格式转换</h3>
+                            <p data-lang-key="tool_imgconv_desc">PNG / JPEG / WEBP</p>
+                        </div>
+                        <div class="tool-card" data-tool="clipboard">
+                            <i class="fa-solid fa-clipboard"></i>
+                            <h3 data-lang-key="tool_clipboard_title">剪贴板抓取</h3>
+                            <p data-lang-key="tool_clipboard_desc">实时捕获剪贴板文本</p>
+                        </div>
+                        <div class="tool-card" data-tool="ocr">
+                            <i class="fa-solid fa-eye"></i>
+                            <h3 data-lang-key="tool_ocr_title">屏幕文字识别</h3>
+                            <p data-lang-key="tool_ocr_desc">OCR 识别图片文字</p>
+                        </div>
+                    </div>
+                    <div class="toolbox-search">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="tool-search" data-lang-placeholder="search_tools" placeholder="搜索工具...">
+                    </div>
+                </div>
+                <div id="toolbox-detail" style="display:none;">
+                    <div class="detail-header">
+                        <button id="btn-back-toolbox" class="back-btn">
+                            <i class="fa-solid fa-arrow-left"></i> <span data-lang-key="btn_back_toolbox">返回工具箱</span>
+                        </button>
+                    </div>
+                    <div id="tool-detail-content"></div>
+                </div>
+            </section>
+
+            <!-- 设置页面 -->
+            <section id="page-settings" class="page">
+                <h2 data-lang-key="settings">设置</h2>
+                <div class="settings-container">
+                    <div class="setting-item">
+                        <label data-lang-key="setting_theme">主题</label>
+                        <select id="setting-theme">
+                            <option value="light" data-lang-key="theme_light">明亮</option>
+                            <option value="dark" data-lang-key="theme_dark">暗黑</option>
+                            <option value="system" data-lang-key="theme_system">跟随系统</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_ai_url">AI 接口地址</label>
+                        <input type="text" id="setting-ai-url" placeholder="https://api.openai.com/v1">
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_api_key">API Key</label>
+                        <input type="password" id="setting-ai-key" placeholder="sk-..." show-password-toggle>
+                        <button class="toggle-password-btn"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_model_name">模型名称</label>
+                        <input type="text" id="setting-ai-model" placeholder="gpt-3.5-turbo">
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_plugin_path">插件存储位置</label>
+                        <div class="path-input-row">
+                            <input type="text" id="setting-plugin-path" readonly>
+                            <button id="btn-select-plugin-path" data-lang-key="btn_select_folder">选择文件夹</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_data_path">数据存储位置</label>
+                        <input type="text" id="setting-data-path" readonly>
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_tts_enabled">AI 语音输出</label>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="setting-tts-enabled">
+                            <span class="slider"></span>
+                        </div>
+                    </div>
+                    <div class="setting-item" id="tts-voice-item" style="display:none;">
+                        <label data-lang-key="setting_tts_voice">语音音色</label>
+                        <select id="setting-tts-voice">
+                            <option value="">默认</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_island_shortcut">对话岛快捷键</label>
+                        <input type="text" id="setting-island-shortcut" value="Ctrl+Shift+K" readonly>
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_island_timeout">自动隐藏延迟 (秒)</label>
+                        <input type="number" id="setting-island-timeout" value="5" min="1" max="30">
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_language">语言</label>
+                        <select id="setting-language">
+                            <option value="zh">中文</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_close_action">关闭窗口时</label>
+                        <select id="setting-close-action">
+                            <option value="ask" data-lang-key="close_ask">每次询问</option>
+                            <option value="minimize" data-lang-key="close_minimize">最小化到托盘</option>
+                            <option value="exit" data-lang-key="close_exit">直接退出</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_no_ask">不再提示</label>
+                        <input type="checkbox" id="setting-close-no-ask">
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_autostart">开机自启动</label>
+                        <input type="checkbox" id="setting-autostart">
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_version">版本</label>
+                        <span id="setting-version">v1.0.0</span>
+                        <button id="btn-check-update" data-lang-key="btn_check_update">检查更新</button>
+                    </div>
+                    <div class="setting-item">
+                        <label data-lang-key="setting_support">支持我们</label>
+                        <button id="btn-support" data-lang-key="btn_support">爱发电</button>
+                    </div>
+                    <div class="setting-item">
+                        <button id="btn-save-settings" data-lang-key="btn_save_settings">保存所有设置</button>
+                    </div>
+                    <div class="setting-item danger">
+                        <button id="btn-uninstall" data-lang-key="btn_uninstall">卸载 SuiWork</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 扩展页面 -->
+            <section id="page-extensions" class="page">
+                <h2 data-lang-key="extensions">扩展</h2>
+                <div class="extensions-header">
+                    <button id="btn-add-extension"><i class="fa-solid fa-plus"></i> <span data-lang-key="btn_add_extension">添加插件</span></button>
+                </div>
+                <div id="extensions-list" class="extensions-list"></div>
+            </section>
+
+            <!-- 关于页面 -->
+            <section id="page-about" class="page">
+                <h2 data-lang-key="about">关于</h2>
+                <div class="about-container">
+                    <div class="about-logo">
+                        <img src="assets/sui_stand.png" alt="SuiWork" onerror="this.style.display='none'">
+                        <h1>SuiWork</h1>
+                    </div>
+                    <p class="about-studio" data-lang-key="about_studio">YQ SKYSTAR 工作室</p>
+                    <div class="about-developers">
+                        <h3 data-lang-key="about_developers">开发者</h3>
+                        <ul>
+                            <li><strong>YQS2c</strong> - 首席开发者 & 全栈</li>
+                            <li><strong>元鸽子</strong> - 文档 & 后端</li>
+                            <li><strong>UNhappychilden</strong> - 测试</li>
+                            <li><strong>STAY</strong> - 美术设计</li>
+                        </ul>
+                    </div>
+                    <div class="about-links">
+                        <a href="#" id="link-github"><i class="fa-brands fa-github"></i> GitHub</a>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
